@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UE. JOÃO TAVARES DA COSTA</title>
+    
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/197/197374.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="INGLÊS JT">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏃</text></svg>">
+
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Orbitron:wght@700&display=swap');
+        
+        * { box-sizing: border-box; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        body { 
+            font-family: 'Fredoka', sans-serif; 
+            margin: 0; height: 100vh; display: flex; flex-direction: column; 
+            background: #f8f0fb;
+            background-image: linear-gradient(135deg, #f8f0fb 0%, #e1bee7 100%);
+            overflow: hidden; color: #2e004f;
+        }
+
+        .emoji-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1; overflow: hidden;
+        }
+
+        .floating-emoji {
+            position: absolute; font-size: 32px; opacity: 0.7;
+            filter: drop-shadow(0 0 5px rgba(106, 27, 154, 0.2));
+            animation: floatRandom linear infinite;
+        }
+
+        @keyframes floatRandom {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(120px, 40px) rotate(90deg); }
+            50% { transform: translate(240px, 0px) rotate(180deg); }
+            75% { transform: translate(120px, -40px) rotate(270deg); }
+            100% { transform: translate(0, 0) rotate(360deg); }
+        }
+
+        header { 
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px);
+            padding: 15px; margin: 10px; border-radius: 22px;
+            border: 2px solid #ce93d8; box-shadow: 0 10px 25px rgba(74, 20, 140, 0.08);
+            z-index: 10; flex-shrink: 0; position: relative; overflow: hidden;
+        }
+
+        .header-main { position: relative; z-index: 5; display: flex; justify-content: space-between; align-items: center; }
+        .school-info h2 { margin: 0; font-family: 'Orbitron'; font-size: 19px; color: #6a1b9a; }
+        .teacher-tag { font-size: 11px; color: #c2185b; font-weight: 700; text-transform: uppercase; }
+
+        .status-bar { 
+            position: relative; z-index: 5; background: #ffffff; padding: 8px 18px; border-radius: 30px; 
+            display: inline-flex; gap: 15px; margin-top: 10px; border: 2px solid #ab47bc; font-size: 11px;
+        }
+
+        .nav-container { position: relative; z-index: 5; display: flex; gap: 8px; margin-top: 12px; background: #f0e1f7; padding: 5px; border-radius: 15px; }
+        .nav-btn { flex: 1; padding: 11px; border: none; background: transparent; color: #6a1b9a; font-weight: 700; cursor: pointer; border-radius: 10px; font-size: 10px; text-transform: uppercase; }
+        .nav-btn.active { background: #ab47bc; color: white; box-shadow: 0 5px 12px rgba(106, 27, 154, 0.2); }
+
+        .main-content { display: flex; flex: 1; padding: 10px; gap: 15px; overflow: hidden; }
+        
+        .students-area { width: 550px; display: flex; flex-direction: column; overflow-y: auto; padding-right: 5px; height: 100%; }
+        
+        .student-card { 
+            background: white; border-radius: 0; margin-bottom: 2px; padding: 12px 15px; 
+            border-bottom: 1px solid #eee; display: flex; align-items: flex-start; justify-content: space-between;
+        }
+
+        .stu-main-info { flex: 1; }
+        .stu-name { font-weight: 900; font-size: 14px; color: #2e004f; text-transform: uppercase; margin-bottom: 8px; display: block; }
+
+        .check-grid-row { display: flex; gap: 4px; }
+        .check-box-std { 
+            width: 26px; height: 26px; border: 1px solid #ccc; border-radius: 6px; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; font-size: 10px; font-weight: bold; background: white; color: #666;
+        }
+        .check-box-std.active { background: #4caf50; color: white; border-color: #388e3c; }
+
+        .stu-score-side { display: flex; align-items: center; gap: 12px; text-align: center; }
+        
+        .crit-box-c { display: flex; flex-direction: column; align-items: center; }
+        .crit-label-c { font-size: 12px; font-weight: 900; color: #c2185b; margin-bottom: 4px; }
+        .in-score-c { 
+            width: 50px; height: 45px; border: 2px solid #e0e0e0; border-radius: 12px; 
+            text-align: center; font-size: 18px; font-weight: bold; color: #333;
+        }
+        .in-score-c:focus { border-color: #ab47bc; outline: none; background: #fdf5ff; }
+
+        .final-result-box { min-width: 60px; }
+        .final-val { font-size: 24px; font-weight: 900; display: block; line-height: 1; }
+        .annual-val { font-size: 11px; color: #888; font-weight: bold; }
+
+        .track-container { 
+            flex: 1; background: rgba(255, 255, 255, 0.4); border-radius: 30px; border: 2px dashed #ce93d8;
+            position: relative; overflow-y: scroll; overflow-x: hidden;
+            background-image: radial-gradient(#d1b3e0 1.2px, transparent 1.2px); background-size: 35px 35px; height: 100%;
+        }
+
+        #lanes-box { min-height: 100%; padding: 20px 0 150px 0; display: flex; flex-direction: column; }
+        .lane { position: relative; height: 55px; min-height: 55px; width: 100%; border-bottom: 1px solid rgba(171, 71, 188, 0.1); display: flex; align-items: center; }
+        .runner { position: absolute; z-index: 5; display: flex; align-items: center; gap: 8px; transition: left 2s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+        .runner-tag { background: #6a1b9a; color: white; padding: 4px 12px; border-radius: 15px; font-size: 10px; font-weight: bold; border: 3px solid #ce93d8; white-space: nowrap; box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+
+        .config-overlay { position: fixed; top: 110px; left: 50%; transform: translateX(-50%); background: white; border-radius: 25px; padding: 25px; width: 90%; max-width: 460px; z-index: 1000; display: none; border: 5px solid #ab47bc; box-shadow: 0 15px 50px rgba(0,0,0,0.2); }
+        .delete-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #f0e1f7; }
+        .btn-move { background: #f0e1f7; border: none; border-radius: 5px; cursor: pointer; padding: 2px 8px; font-weight: bold; margin-left: 5px; color: #6a1b9a; }
+        .btn-x { background: none; border: none; color: #ff4757; font-weight: bold; cursor: pointer; font-size: 16px; margin-left: 10px; }
+
+        #loading { position: fixed; inset: 0; background: #f3e5f5; display: flex; align-items: center; justify-content: center; z-index: 9999; color: #6a1b9a; font-family: 'Orbitron'; }
+    </style>
+</head>
+<body onclick="fecharTodos()">
+
+<div id="loading"><b>🚀 SINCRONIZANDO PISTAS...</b></div>
+
+<header onclick="event.stopPropagation()">
+    <div id="emoji-container" class="emoji-bg"></div>
+    <div class="header-main">
+        <div class="school-info">
+            <h2>UE. JOÃO TAVARES DA COSTA</h2>
+            <div class="teacher-tag">PROF(A) RAQUEL AGUIAR</div>
+            <div class="status-bar">
+                <span><b>TURMA:</b> <span id="txt-turma">---</span></span>
+                <span><b>MATÉRIA:</b> <span id="txt-materia">---</span></span>
+                <span><b>ALUNOS:</b> <span id="txt-total-alunos" style="color:#c2185b; font-weight:900;">0</span></span>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <button onclick="exportarExcelCompleto()" style="background:#2e7d32; color:white; padding:10px 15px; border-radius:12px; border:none; font-weight:bold; cursor:pointer; font-size:11px;">📊 EXCEL</button>
+            <button onclick="document.getElementById('importFile').click()" style="background:#f39c12; color:white; padding:10px 15px; border-radius:12px; border:none; font-weight:bold; cursor:pointer; font-size:11px;">📂 SUBIR BK</button>
+            <button onclick="exportarBackup()" style="background:#ab47bc; color:white; padding:10px 15px; border-radius:12px; border:none; font-weight:bold; cursor:pointer; font-size:11px;">💾 BK</button>
+            <input type="file" id="importFile" style="display:none" onchange="importarBackup(this)">
+        </div>
+    </div>
+    <nav class="nav-container">
+        <button class="nav-btn" onclick="abrirPainel('p-turmas')">🎓 TURMAS</button>
+        <button class="nav-btn" onclick="abrirPainel('p-mat')">📚 MATÉRIAS</button>
+        <button class="nav-btn" onclick="abrirPainel('p-alunos')">👥 ALUNOS</button>
+        <button class="nav-btn" onclick="abrirPainel('p-crit')">📋 CRITÉRIOS</button>
+        <div id="bim-tabs" style="display:flex; gap:5px; margin-left:auto;"></div>
+    </nav>
+</header>
+
+<main class="main-content">
+    <aside class="students-area" id="stu-list"></aside>
+    <section class="track-container">
+        <div id="lanes-box"></div>
+    </section>
+</main>
+
+<div id="p-turmas" class="config-overlay" onclick="event.stopPropagation()">
+    <h3 style="font-family:'Orbitron'; color:#6a1b9a">Turmas</h3>
+    <div id="class-list-del"></div>
+    <input type="text" id="in-cl" placeholder="+ Nova Turma" onkeypress="if(event.key==='Enter') addT()" style="width:100%; padding:12px; margin-top:10px; border-radius:12px; border:1px solid #ddd;">
+</div>
+
+<div id="p-mat" class="config-overlay" onclick="event.stopPropagation()">
+    <h3 style="font-family:'Orbitron'; color:#6a1b9a">Matérias</h3>
+    <div id="subject-list-del"></div>
+    <input type="text" id="in-mat" placeholder="+ Nova Matéria" onkeypress="if(event.key==='Enter') addM()" style="width:100%; padding:12px; margin-top:10px; border-radius:12px; border:1px solid #ddd;">
+</div>
+
+<div id="p-alunos" class="config-overlay" onclick="event.stopPropagation()">
+    <h3 style="font-family:'Orbitron'; color:#6a1b9a">Alunos</h3>
+    <textarea id="in-nm" placeholder="Nomes..." style="width:100%; height:100px; padding:12px; border-radius:12px; border:1px solid #ddd;"></textarea>
+    <button onclick="addStus()" style="width:100%; background:#6a1b9a; color:white; border:none; padding:12px; margin:10px 0; border-radius:12px; font-weight:bold; cursor:pointer;">ADICIONAR</button>
+    <div id="stu-list-del" style="max-height:200px; overflow-y:auto;"></div>
+</div>
+
+<div id="p-crit" class="config-overlay" onclick="event.stopPropagation()">
+    <h3 style="font-family:'Orbitron'; color:#6a1b9a">Critérios</h3>
+    <div style="background:#f3e5f5; padding:12px; border-radius:15px; margin-bottom:10px; font-weight:bold; color:#6a1b9a;">
+        Vistos Totais: <input type="number" id="tot-at" onchange="setVistos(this.value)" style="width:60px; padding:5px; border-radius:8px; border:1px solid #ab47bc;">
+    </div>
+    <div id="crit-list-del"></div>
+    <input type="text" id="in-cr" placeholder="+ Novo Critério" onkeypress="if(event.key==='Enter') addC()" style="width:100%; padding:12px; margin-top:10px; border-radius:12px; border:1px solid #ddd;">
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXIOrHsZbHXvOIGTk0HS8NOwVBvpmwrOo",
+        authDomain: "ue-joao-tavares-da-costa.firebaseapp.com",
+        databaseURL: "https://ue-joao-tavares-da-costa-default-rtdb.firebaseio.com",
+        projectId: "ue-joao-tavares-da-costa",
+        storageBucket: "ue-joao-tavares-da-costa.firebasestorage.app",
+        messagingSenderId: "879518153821",
+        appId: "1:879518153821:web:282a71916d6b1e9199a1b4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let dados = { turmas: [], ti: 0, bim: 1 };
+    const emojis = ['🚀', '🛸', '🪐', '👾', '🌍', '🛰️', '☄️', '⚛️', '🔭', '🧪'];
+    let lastFocusedId = null;
+
+    function initEmojiFloat() {
+        const container = document.getElementById('emoji-container');
+        for (let i = 0; i < 15; i++) {
+            const span = document.createElement('span');
+            span.className = 'floating-emoji';
+            span.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+            span.style.left = Math.random() * 100 + '%';
+            span.style.top = Math.random() * 100 + '%';
+            span.style.animationDuration = (12 + Math.random() * 18) + 's';
+            span.style.animationDelay = (Math.random() * 5) + 's';
+            container.appendChild(span);
+        }
+    }
+    initEmojiFloat();
+
+    db.ref('biolab_joao_tavares').on('value', (snap) => {
+        if(snap.val()) { dados = snap.val(); if (!dados.turmas) dados.turmas = []; }
+        document.getElementById('loading').style.display = 'none';
+        renderizar();
+        if(lastFocusedId) {
+            const el = document.getElementById(lastFocusedId);
+            if(el) { el.focus(); const val = el.value; el.value = ''; el.value = val; }
+        }
+    });
+
+    function salvar() { db.ref('biolab_joao_tavares').set(dados); }
+    function fecharTodos() { document.querySelectorAll('.config-overlay').forEach(p => p.style.display = 'none'); }
+    function abrirPainel(id) { fecharTodos(); document.getElementById(id).style.display = 'block'; }
+
+    // Função auxiliar para pegar os dois primeiros nomes
+    function getDoisNomes(nomeCompleto) {
+        if (!nomeCompleto) return "";
+        let partes = nomeCompleto.split(' ').filter(p => p.length > 0);
+        return partes.slice(0, 2).join(' ');
+    }
+
+    function getNota(aluno, bim, mIdx) {
+        const t = dados.turmas[dados.ti]; if(!t || !t.mats[mIdx]) return 0;
+        let kA = `${mIdx}_${bim}_ativ`, totA = (t.totA && t.totA[mIdx]) || 10;
+        if (!aluno.sc) aluno.sc = {};
+        let nVistos = ((aluno.sc[kA] || []).length / totA) * 10;
+        let nExtra = 0, crits = (t.crits && t.crits[mIdx]) || [];
+        crits.forEach(c => nExtra += parseFloat(aluno.sc[`${mIdx}_${bim}_${c.n}`] || 0));
+        let res = (nVistos + nExtra) / (crits.length + 1);
+        return isNaN(res) ? 0 : res;
+    }
+
+    function renderizar() {
+        if (!dados.turmas) dados.turmas = [];
+        const t = dados.turmas[dados.ti];
+
+        document.getElementById('class-list-del').innerHTML = dados.turmas.map((x,i)=>`
+            <div class="delete-item">
+                <span onclick="dados.ti=${i};salvar()" style="cursor:pointer; font-weight:${i===dados.ti?'700':'400'}">${x.n}</span>
+                <div><button class="btn-move" onclick="moverT(${i}, -1)">↑</button><button class="btn-move" onclick="moverT(${i}, 1)">↓</button><button class="btn-x" onclick="delT(${i})">✖</button></div>
+            </div>`).join('');
+
+        if(!t) return;
+
+        document.getElementById('subject-list-del').innerHTML = (t.mats || []).map((m,i)=>`
+            <div class="delete-item">
+                <span onclick="dados.turmas[dados.ti].mi=${i};salvar()" style="cursor:pointer; font-weight:${i===t.mi?'700':'400'}">${m}</span>
+                <div><button class="btn-move" onclick="moverM(${i}, -1)">↑</button><button class="btn-move" onclick="moverM(${i}, 1)">↓</button><button class="btn-x" onclick="delM(${i})">✖</button></div>
+            </div>`).join('');
+
+        document.getElementById('stu-list-del').innerHTML = (t.st || []).map((s,i)=>`<div class="delete-item"><span>${s.n}</span><button class="btn-x" onclick="delS(${i})">✖</button></div>`).join('');
+        document.getElementById('crit-list-del').innerHTML = (t.crits && t.crits[t.mi] || []).map((c,i)=>`<div class="delete-item"><span>${c.n}</span><button class="btn-x" onclick="delC(${i})">✖</button></div>`).join('');
+
+        document.getElementById('txt-turma').innerText = t.n;
+        document.getElementById('txt-materia').innerText = (t.mats && t.mats[t.mi]) || "---";
+        document.getElementById('txt-total-alunos').innerText = (t.st || []).length;
+        document.getElementById('tot-at').value = (t.totA && t.totA[t.mi]) || 10;
+
+        document.getElementById('stu-list').innerHTML = (t.st || []).map((s, si) => {
+            let nB = getNota(s, dados.bim, t.mi);
+            let n1 = getNota(s, 1, t.mi), n2 = getNota(s, 2, t.mi), n3 = getNota(s, 3, t.mi), n4 = getNota(s, 4, t.mi);
+            let mediaAnual = (n1 + n2 + n3 + n4) / 4;
+            let corDinamica = nB < 7 ? '#ff4757' : '#2ecc71';
+            
+            let kA = `${t.mi}_${dados.bim}_ativ`, chs = '', tot = (t.totA && t.totA[t.mi]) || 10;
+            if (!s.sc) s.sc = {};
+            for(let i=0; i<tot; i++) {
+                chs += `<div class="check-box-std ${(s.sc[kA]||[]).includes(i)?'active':''}" onclick="tglV(${si},'${kA}',${i})">${i+1}</div>`;
+            }
+
+            let critsMat = (t.crits && t.crits[t.mi]) || [];
+            let inputsCrit = critsMat.map((c, ci) => {
+                const inputId = `in_${si}_${ci}`;
+                return `
+                <div class="crit-box-c">
+                    <span class="crit-label-c">${c.n.charAt(0).toUpperCase()}</span>
+                    <input type="number" step="0.1" id="${inputId}"
+                        value="${s.sc[`${t.mi}_${dados.bim}_${c.n}`]||0}" 
+                        onfocus="lastFocusedId='${inputId}'"
+                        onchange="upN(${si},'${t.mi}_${dados.bim}_${c.n}',this.value)" 
+                        class="in-score-c"
+                        tabindex="${(si * 10) + ci + 1}">
+                </div>`;
+            }).join('');
+
+            // AQUI: Exibindo dois nomes na lista
+            return `
+            <div class="student-card">
+                <div class="stu-main-info">
+                    <span class="stu-name">${getDoisNomes(s.n)}</span>
+                    <div class="check-grid-row">${chs}</div>
+                </div>
+                <div class="stu-score-side">
+                    ${inputsCrit}
+                    <div class="final-result-box">
+                        <span class="final-val" style="color:${corDinamica}">${nB.toFixed(1)}</span>
+                        <span class="annual-val">An: ${mediaAnual.toFixed(1)}</span>
+                    </div>
+                </div>
+            </div>`;
+        }).join('');
+
+        const lanesBox = document.getElementById('lanes-box'); lanesBox.innerHTML = '';
+        (t.st || []).forEach((s, i) => {
+            let n = getNota(s, dados.bim, t.mi);
+            let corDinamica = n < 7 ? '#ff4757' : '#2ecc71';
+            
+            // AQUI: Exibindo dois nomes na pista
+            let nomeExibicao = getDoisNomes(s.n);
+
+            let lane = document.createElement('div'); lane.className = 'lane';
+            lane.innerHTML = `<div class="runner" style="left:${n*9.2}%">
+                <span style="font-size:26px;">${emojis[i%emojis.length]}</span>
+                <div class="runner-tag" style="border-color: ${corDinamica}; border-width: 3px;">${nomeExibicao} | ${n.toFixed(1)}</div>
+            </div>`;
+            lanesBox.appendChild(lane);
+        });
+
+        document.getElementById('bim-tabs').innerHTML = [1,2,3,4].map(b => `<button class="nav-btn ${b===dados.bim?'active':''}" onclick="event.stopPropagation(); dados.bim=${b};salvar()">${b}º BIM</button>`).join('');
+    }
+
+    function tglV(si, k, idx) { lastFocusedId = null; let s=dados.turmas[dados.ti].st[si]; if(!s.sc) s.sc={}; if(!s.sc[k]) s.sc[k]=[]; let p=s.sc[k].indexOf(idx); if(p>-1) s.sc[k].splice(p,1); else s.sc[k].push(idx); salvar(); }
+    function upN(si, k, v) { if(!dados.turmas[dados.ti].st[si].sc) dados.turmas[dados.ti].st[si].sc={}; dados.turmas[dados.ti].st[si].sc[k] = parseFloat(v); salvar(); }
+    function setVistos(v) { if(!dados.turmas[dados.ti].totA) dados.turmas[dados.ti].totA=[]; dados.turmas[dados.ti].totA[dados.turmas[dados.ti].mi] = parseInt(v); salvar(); }
+    
+    function addT() { let v=document.getElementById('in-cl').value; if(v){ if(!dados.turmas) dados.turmas=[]; dados.turmas.push({n:v, mats:['Inglês'], mi:0, totA:[10], crits:[[{n:'C'}]], st:[]}); salvar(); document.getElementById('in-cl').value=''; } }
+    function addM() { let v=document.getElementById('in-mat').value; if(v){ const t=dados.turmas[dados.ti]; if(!t.mats) t.mats=[]; t.mats.push(v); if(!t.totA) t.totA=[]; t.totA.push(10); if(!t.crits) t.crits=[]; t.crits.push([{n:'C'}]); t.mi=t.mats.length-1; salvar(); document.getElementById('in-mat').value=''; } }
+    
+    function addC() { let v = document.getElementById('in-cr').value; if(v) { const t = dados.turmas[dados.ti]; if(!t.crits) t.crits = []; if(!t.crits[t.mi]) t.crits[t.mi] = []; t.crits[t.mi].push({n: v}); salvar(); document.getElementById('in-cr').value = ''; } }
+
+    function addStus() { 
+        let n=document.getElementById('in-nm').value.split('\n'); 
+        n.forEach(x=>{ if(x.trim()) { if(!dados.turmas[dados.ti].st) dados.turmas[dados.ti].st=[]; dados.turmas[dados.ti].st.push({n:x.trim().toUpperCase(), sc:{}}); } }); 
+        dados.turmas[dados.ti].st.sort((a,b)=>a.n.localeCompare(b.n));
+        document.getElementById('in-nm').value=''; salvar(); 
+    }
+
+    function delT(i) { if(confirm('Excluir turma?')){ dados.turmas.splice(i, 1); dados.ti = 0; salvar(); } }
+    function delM(i) { if(confirm('Excluir matéria?')){ dados.turmas[dados.ti].mats.splice(i, 1); dados.turmas[dados.ti].mi = 0; salvar(); } }
+    function delS(i) { if(confirm('Remover aluno?')){ dados.turmas[dados.ti].st.splice(i, 1); salvar(); } }
+    function delC(i) { if(confirm('Remover critério?')){ dados.turmas[dados.ti].crits[dados.turmas[dados.ti].mi].splice(i, 1); salvar(); } }
+
+    function exportarExcelCompleto() {
+        const t = dados.turmas[dados.ti]; if(!t) return;
+        let csv = "\ufeff"; 
+        t.mats.forEach((materiaNome, mIdx) => {
+            csv += `MATÉRIA: ${materiaNome.toUpperCase()}\n`;
+            csv += "ALUNO;1º BIM;2º BIM;3º BIM;4º BIM;MÉDIA FINAL\n";
+            t.st.forEach(s => {
+                let n1 = getNota(s, 1, mIdx), n2 = getNota(s, 2, mIdx), n3 = getNota(s, 3, mIdx), n4 = getNota(s, 4, mIdx);
+                let media = (n1 + n2 + n3 + n4) / 4;
+                csv += `${s.n};${n1.toFixed(1)};${n2.toFixed(1)};${n3.toFixed(1)};${n4.toFixed(1)};${media.toFixed(1)}\n`;
+            });
+            csv += "\n\n"; 
+        });
+        let a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv;charset=utf-8;'}));
+        a.download = `RELATORIO_JT_${t.n}.csv`; a.click();
+    }
+    function exportarBackup() { let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(dados)],{type:'application/json'})); a.download='Backup_JT.json'; a.click(); }
+    function importarBackup(input) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            try {
+                const json = JSON.parse(reader.result);
+                if(confirm("Substituir dados atuais?")) { dados = json; salvar(); }
+            } catch(e) { alert("Backup inválido."); }
+        };
+        reader.readAsText(input.files[0]);
+    }
+</script>
+</body>
+</html>
